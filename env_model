@@ -1,0 +1,6 @@
+PORT = 'Número da porta do servidor ',
+HOST = 'hostname',
+DB_PORT = 'Numéro da porta',
+USER = 'Nome do usuário',
+PASSWORD = 'Senha',
+DATABASE = 'Nome do database'
