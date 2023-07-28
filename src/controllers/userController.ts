@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
 import { db } from "../config/db";
+import bcrypt from 'bcrypt'
+import * as jwt from 'jsonwebtoken'
 
 const signUp = async (req: Request, res: Response) => {
+    // Transforma a senha em hash e salva o usuário no db
     const user = req.body
+
+    const hashPassword = await bcrypt.hash(user.password, 10)
+    user.password = hashPassword
 
     if (!user) res.status(400).send('Informe um usuário')
 
@@ -21,20 +27,35 @@ const signUp = async (req: Request, res: Response) => {
     }
 }
 
+// Talvez criptografar o token antes de mandar
 const login = async (req: Request, res: Response) => {
-    const body = req.body
+    // Salva as infos do usuário em um token e retorna o usuário mais o token
+    try {
+        const body = req.body
 
-    const user = await db('users')
-        .where({ email: body.email })
-        .first()
+        const user = await db('users')
+            .where({ email: body.email })
+            .first()
 
-    if (!user) {
-        res.status(404).send('Email ou senha inválidos')
-    } else {
-        user.password != body.password ?
+        user.admin === 1 ? user.admin = true : user.admin = false
+
+        if (!user) res.status(401).send('Email ou senha inválidos')
+
+        const matchPassword = await bcrypt.compare(body.password, user.password)
+
+        if (matchPassword) {
+            delete user.password
+
+            const secretKey = process.env.AUTH_SECRET_KEY || ''
+            const token = jwt.sign({ ...user }, secretKey)
+            res.status(200).send({ ...user, token })
+
+        } else {
             res.status(401).send('Email ou senha inválidos')
-            :
-            res.status(200).send('Login')
+        }
+
+    } catch (e) {
+        res.status(500).send(e)
     }
 }
 
