@@ -7,10 +7,10 @@ const signUp = async (req: Request, res: Response) => {
     // Transforma a senha em hash e salva o usuário no db
     const user = req.body
 
+    if (!user) res.status(400).send('Informe um usuário')
+
     const hashPassword = await bcrypt.hash(user.password, 10)
     user.password = hashPassword
-
-    if (!user) res.status(400).send('Informe um usuário')
 
     const usersFromDb = await db('users')
         .where({ email: user.email })
@@ -28,8 +28,8 @@ const signUp = async (req: Request, res: Response) => {
 }
 
 // Talvez criptografar o token antes de mandar
+// Salva as infos do usuário em um token e retorna o usuário mais o token
 const login = async (req: Request, res: Response) => {
-    // Salva as infos do usuário em um token e retorna o usuário mais o token
     try {
         const body = req.body
 
@@ -37,23 +37,21 @@ const login = async (req: Request, res: Response) => {
             .where({ email: body.email })
             .first()
 
-        user.admin === 1 ? user.admin = true : user.admin = false
-
         if (!user) res.status(401).send('Email ou senha inválidos')
 
         const matchPassword = await bcrypt.compare(body.password, user.password)
 
         if (matchPassword) {
             delete user.password
+            user.admin === 1 ? user.admin = true : user.admin = false
 
+            const expireAt = user.admin ? (60 * 60 * 24 * 1) : (60 * 60 * 24 * 30) // Segundo/Minutos/Horas/Dias
             const secretKey = process.env.AUTH_SECRET_KEY || ''
-            const token = jwt.sign({ ...user }, secretKey)
+            const token = jwt.sign({ ...user }, secretKey, { expiresIn: expireAt })
             res.status(200).send({ ...user, token })
-
         } else {
             res.status(401).send('Email ou senha inválidos')
         }
-
     } catch (e) {
         res.status(500).send(e)
     }
