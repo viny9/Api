@@ -7,7 +7,7 @@ const getProducts = (req: Request, res: Response) => {
         .catch(e => res.status(500).send(e))
 }
 
-const getProductById = (req: Request, res: Response) => {
+const getProductById = async (req: Request, res: Response) => {
     db('products')
         .where({ id: req.params.id })
         .then(product => res.status(200).send(product))
@@ -34,8 +34,6 @@ const updateProduct = (req: Request, res: Response) => {
 }
 
 const deleteProduct = (req: Request, res: Response) => {
-    const product = req.body
-
     db('products')
         .delete()
         .where({ id: req.params.id })

@@ -1,19 +1,31 @@
 import express from 'express'
+import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
 import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
-import { createUser, login } from '../controllers/userController'
 
 const router = express.Router()
 
+// Cadastro e login
+router.post('/signUp', signUp)
+router.post('/login', login)
+
 // Rotas de produtos
-router.get('/', (req, res) => res.send('Hello word'))
-router.get('/get', getProducts)
-router.get('/getById/:id', getProductById)
-router.post('/add', createProduct)
-router.put('/update/:id', updateProduct)
-router.delete('/delete/:id', deleteProduct)
+router.route('/products')
+    .get(getProducts)
+    .post(createProduct)
+
+router.route('/products/:id')
+    .get(getProductById)
+    .put(updateProduct)
+    .delete(deleteProduct)
 
 // Rotas de usuário
-router.post('/signUp', createUser)
-router.post('/login', login)
+
+router.route('/users')
+    .get(getUsers)
+
+router.route('/users/:id')
+    .get(getUserById)
+    .put(updateUser)
+    .delete(deleteUser)
 
 export default router
