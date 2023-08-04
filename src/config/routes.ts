@@ -2,6 +2,7 @@ import express from 'express'
 import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
 import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
 import { isAdmin, isLogged } from './auth'
+import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
 
 const router = express.Router()
 
@@ -28,5 +29,15 @@ router.route('/users/:id') // Talvez tirar esse id e pegar o id pelo token
     .get(getUserById)
     .put(updateUser)
     .delete(deleteUser)
+
+router.route('/cart')
+    .all(isLogged)
+    .get(getCartItems)
+    .post(addItemInCart)
+
+router.route('/cart/:id')
+    .all(isLogged)
+    .get(getCartItemsById)
+    .delete(removeCartItem)
 
 export default router

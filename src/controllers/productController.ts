@@ -2,13 +2,13 @@ import { Request, Response } from 'express'
 import { db } from '../config/db'
 
 const getProducts = (req: Request, res: Response) => {
-    db('products')
+    db('product')
         .then(products => res.status(200).send(products))
         .catch(e => res.status(500).send(e))
 }
 
 const getProductById = async (req: Request, res: Response) => {
-    db('products')
+    db('product')
         .where({ id: req.params.id })
         .then(product => res.status(200).send(product))
         .catch(e => res.status(500).send(e))
@@ -17,7 +17,7 @@ const getProductById = async (req: Request, res: Response) => {
 const createProduct = (req: Request, res: Response) => {
     const product = req.body
 
-    db('products')
+    db('product')
         .insert(product)
         .then(() => res.status(204).send())
         .catch(e => res.status(500).send(e))
@@ -26,7 +26,7 @@ const createProduct = (req: Request, res: Response) => {
 const updateProduct = (req: Request, res: Response) => {
     const product = req.body
 
-    db('products')
+    db('product')
         .update(product)
         .where({ id: req.params.id })
         .then(() => res.status(204).send())
@@ -34,7 +34,7 @@ const updateProduct = (req: Request, res: Response) => {
 }
 
 const deleteProduct = (req: Request, res: Response) => {
-    db('products')
+    db('product')
         .delete()
         .where({ id: req.params.id })
         .then(() => res.status(204).send())
