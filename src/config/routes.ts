@@ -5,6 +5,7 @@ import { isAdmin, isLogged } from './auth'
 import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
 import { addItemInList, changeItemPosition, getListItems, removeItemFromList } from '../controllers/favoriteListController'
 import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
+import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
 
 const router = express.Router()
 
@@ -60,5 +61,14 @@ router.route('/category/:id')
     .all(isAdmin)
     .put(editCategory)
     .delete(deleteCategory)
+
+router.route('/discount')
+    .get(getDiscounts)
+    .post(isAdmin, newDiscount)
+
+router.route('/discount/:id')
+    .all(isAdmin)
+    .put(updateDiscountInfos)
+    .delete(deleteDiscount)
 
 export default router

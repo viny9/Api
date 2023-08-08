@@ -6,6 +6,7 @@ export async function up(knex: Knex): Promise<void> {
         table.increments('id').primary()
         table.integer('discount_percentage').notNullable()
         table.integer('product_id').references('id').inTable('product').unsigned()
+        table.integer('discount_id').references('id').inTable('discount').unsigned()
     })
 }
 
