@@ -4,6 +4,7 @@ import { createProduct, deleteProduct, getProductById, getProducts, updateProduc
 import { isAdmin, isLogged } from './auth'
 import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
 import { addItemInList, changeItemPosition, getListItems, removeItemFromList } from '../controllers/favoriteListController'
+import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
 
 const router = express.Router()
 
@@ -50,5 +51,14 @@ router.route('/list/:id')
     .all(isLogged)
     .put(changeItemPosition)
     .delete(removeItemFromList)
+
+router.route('/category')
+    .get(isLogged, getCategories)
+    .post(isAdmin, newCategory)
+
+router.route('/category/:id')
+    .all(isAdmin)
+    .put(editCategory)
+    .delete(deleteCategory)
 
 export default router
