@@ -24,21 +24,22 @@ const newDiscount = async (req: Request, res: Response) => {
     const discount = req.body
     const products = discount.products
 
-    const allDiscounts = await db('discount')
-    const lastProductIndex = allDiscounts.length - 1
-
     delete discount.products
 
     await db('discount')
         .insert(discount)
         .catch(e => res.status(500).send(e))
 
+    const allDiscounts = await db('discount')
+    const lastProductIndex = allDiscounts.length - 1
+
     await products.forEach(async (product: any) => {
-        product.discount_id = allDiscounts[lastProductIndex]?.id + 1 || 1
+        product.discount_id = allDiscounts[lastProductIndex]?.id || 1
 
         db('product_discount')
             .insert(product)
             .then(() => res.status(200).send())
+            .catch(e => res.status(500).send(e))
     });
 }
 

@@ -1,19 +1,18 @@
 import express from 'express'
+import { isAdmin, isLogged } from './auth'
 import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
 import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
-import { isAdmin, isLogged } from './auth'
 import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
 import { addItemInList, changeItemPosition, getListItems, removeItemFromList } from '../controllers/favoriteListController'
 import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
 import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
+import { deleteOrder, getOrders, newOrder } from '../controllers/orderController'
 
 const router = express.Router()
 
-// Cadastro e login
 router.post('/signUp', signUp)
 router.post('/login', login)
 
-// Rotas de produtos
 router.route('/products')
     .get(getProducts)
     .post(isAdmin, createProduct)
@@ -23,7 +22,6 @@ router.route('/products/:id')
     .put(isAdmin, updateProduct)
     .delete(isAdmin, deleteProduct)
 
-// Rotas de usuário
 router.route('/users')
     .get(getUsers)
 
@@ -70,5 +68,15 @@ router.route('/discount/:id')
     .all(isAdmin)
     .put(updateDiscountInfos)
     .delete(deleteDiscount)
+
+router.route('/order')
+    .get(getOrders)
+    .post(newOrder)
+
+router.route('/order/:id')
+    .delete(deleteOrder)
+
+// Uma migration para pagamentos 
+// Açociar os pagamentos ao usuário pelo id
 
 export default router

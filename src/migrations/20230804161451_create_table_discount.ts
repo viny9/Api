@@ -9,7 +9,6 @@ export async function up(knex: Knex): Promise<void> {
         table.boolean('active').notNullable()
         table.string('start_at').notNullable()
         table.string('end_at').notNullable()
-        // table.integer('product').references('id').inTable('product_discount').unsigned()
     })
 }
 
