@@ -3,16 +3,15 @@ import { db } from "../config/db";
 
 const getOrders = async (req: Request, res: Response) => {
     try {
-        let orders = await db('order')
+        const orders: any = await db
+            .select('o.id', 'o.user_id', 'o.status', 'o.total', 'o.payment_method', db.raw('JSON_ARRAYAGG(JSON_OBJECT("product_id", a.product_id, "quantity", a.quantity)) as products'))
+            .from('order as o')
+            .join('order_item as a', 'o.id', 'a.order_id')
+            .groupBy('o.id')
 
-        orders = orders.map(async order => {
-            const orderProducts = await db('order_item')
-                .where({ order_id: order.id })
-            order.products = orderProducts
-            return order
-        })
-
-        orders = await Promise.all(orders)
+        orders.forEach((order: any) => {
+            order.products = JSON.parse(order.products)
+        });
 
         res.status(200).send(orders)
     } catch (e) {
@@ -21,33 +20,58 @@ const getOrders = async (req: Request, res: Response) => {
 
 }
 
-const newOrder = async (req: Request, res: Response) => {
-    const body = req.body
-    const products = body.products
+const newOrder = async (order: any) => {
+    try {
+        await db.transaction(async trx => {
+            // Adicionar o id do stripe no lugar do increment
+            let products
 
-    delete body.products
+            if (order.metadata.products) {
+                // Caso seja uma compra efetuada pelo carrinho
+                products = JSON.parse(order.metadata.products)
+            } else {
+                // Caso seja uma compra de um produto individual
+                products = [order.metadata]
+            }
 
-    const t = await getOrderTotal(products)
-    body.total = t
+            const user = await trx.table('users').where({ email: order.user_email }).first()
+            order.user_id = user.id
 
-    await db('order')
-        .insert(body)
-        .catch(e => res.status(500).send(e))
+            delete order.user_email
+            delete order.metadata
 
-    const allOrders = await db('order')
-    const lastProductIndex = allOrders.length - 1
+            await trx.insert(order).table('order')
 
-    await products.forEach((product: any) => {
-        product.order_id = allOrders[lastProductIndex]?.id || 1
+            const allOrders = await trx.table('order')
+            const lastProductIndex = allOrders.length - 1
 
-        db('order_item')
-            .insert(product)
-            .then(() => res.status(201).send())
-            .catch(e => res.status(500).send(e))
-    });
+            await products.forEach(async (product: any) => {
+                product.order_id = allOrders[lastProductIndex]?.id || 1
+
+                await trx.insert(product).table('order_item')
+            })
+        })
+    } catch (error) {
+        return error
+    }
 }
 
-const getOrderTotal = async (products: any) => {
+const updateOrderStatus = async (paymentIntent: any) => {
+    try {
+        await db.transaction(async trx => {
+            const order = await trx.table('order').where({ payment_id: paymentIntent.id }).first()
+
+            order.status = 'paid'
+            order.payment_id = null
+
+            await trx.update(order).table('order').where({ id: order.id })
+        })
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const getOrderTotalAmount = async (products: any) => {
     let total = 0;
 
     let dbProducts = products.map(async (product: any) => {
@@ -61,6 +85,7 @@ const getOrderTotal = async (products: any) => {
     })
 
     dbProducts = await Promise.all(dbProducts)
+
     dbProducts.forEach((product: any) => {
         let calc = product.price * product.quantity
         total += calc
@@ -84,6 +109,8 @@ const deleteOrder = (req: Request, res: Response) => {
 
 export {
     getOrders,
+    getOrderTotalAmount,
     newOrder,
-    deleteOrder
+    updateOrderStatus,
+    deleteOrder,
 }

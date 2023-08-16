@@ -6,12 +6,14 @@ import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '.
 import { addItemInList, changeItemPosition, getListItems, removeItemFromList } from '../controllers/favoriteListController'
 import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
 import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
-import { deleteOrder, getOrders, newOrder } from '../controllers/orderController'
+import { deleteOrder, getOrders } from '../controllers/orderController'
+import { createProductPaymentSession, createCartPaymentSession, listenWebhooks } from '../controllers/stripeController'
 
 const router = express.Router()
 
 router.post('/signUp', signUp)
 router.post('/login', login)
+router.post('/webhook', listenWebhooks)
 
 router.route('/products')
     .get(getProducts)
@@ -71,12 +73,11 @@ router.route('/discount/:id')
 
 router.route('/order')
     .get(getOrders)
-    .post(newOrder)
 
 router.route('/order/:id')
     .delete(deleteOrder)
 
-// Uma migration para pagamentos 
-// Açociar os pagamentos ao usuário pelo id
+router.post('/payment', isLogged, createProductPaymentSession)
+router.post('/payment/cart', isLogged, createCartPaymentSession)
 
 export default router

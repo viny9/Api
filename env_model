@@ -1,3 +1,6 @@
+STRIPE_SECRET_KEY = "Chave Secreta do stripe"
+STRIPE_ENDPOINT_SECRET = "Chave secreta de endpoit"
+AUTH_SECRET_KEY = "Sua chave secreta. Ela pode ser o que vc quiser"   
 PORT = 'Número da porta do servidor ',
 HOST = 'hostname',
 DB_PORT = 'Numéro da porta',
