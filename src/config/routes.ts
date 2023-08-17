@@ -1,4 +1,5 @@
 import express from 'express'
+import { multerConfig } from './multer'
 import { isAdmin, isLogged } from './auth'
 import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
 import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
@@ -8,6 +9,8 @@ import { deleteCategory, editCategory, getCategories, newCategory } from '../con
 import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
 import { deleteOrder, getOrders } from '../controllers/orderController'
 import { createProductPaymentSession, createCartPaymentSession, listenWebhooks } from '../controllers/stripeController'
+import multer from 'multer'
+import { fileUpload, getImgs } from '../controllers/imgController'
 
 const router = express.Router()
 
@@ -76,6 +79,13 @@ router.route('/order')
 
 router.route('/order/:id')
     .delete(deleteOrder)
+
+router.route('/imgs')
+    .get(getImgs)
+    .post(multer(multerConfig).single('file'), fileUpload)
+
+// router.route('/imgs/:id')
+//     .delete(deleteImg)
 
 router.post('/payment', isLogged, createProductPaymentSession)
 router.post('/payment/cart', isLogged, createCartPaymentSession)
