@@ -6,7 +6,9 @@ const multerConfig = {
     dest: path.resolve(__dirname, '..', '..', 'uploads'),
     storage: multer.diskStorage({
         destination: (req: Request, file: any, cb: any) => {
-            cb(null, path.resolve(__dirname, '..', '..', 'uploads'))
+            if (process.env.ENVIROMENT === 'development') {
+                cb(null, path.resolve(__dirname, '..', '..', 'uploads'))
+            }
         },
         filename: (req: Request, file: any, cb: any) => {
             // Mudar depois

@@ -3,6 +3,7 @@ import { db } from "../config/db";
 import { promisify } from 'util'
 import fs from 'fs'
 import path from 'path'
+import { storages } from "../config/firebase";
 
 const getImgs = (req: Request, res: Response) => {
     db('image')
@@ -10,7 +11,7 @@ const getImgs = (req: Request, res: Response) => {
         .catch(e => res.status(500).send(e))
 }
 
-const fileUpload = (req: any, res: Response) => {
+const fileUpload = async (req: any, res: Response) => {
     const { originalname: name, size, filename: key } = req.file
 
     const img = {
@@ -19,6 +20,9 @@ const fileUpload = (req: any, res: Response) => {
         key,
         url: ''
     }
+
+    const bucket = storages.bucket()
+    const storageFile = bucket.file(img.name)
 
     // Adicionar condicional pra mudar url quando tiver no mode de produção
     img.url = `${process.env.APP_URL}/files/${key}`
