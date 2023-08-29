@@ -1,44 +1,53 @@
 import { Request, Response } from 'express'
-import { db } from '../config/db'
+import Product from '../models/Product'
 
-const getProducts = (req: Request, res: Response) => {
-    db('product')
-        .then(products => res.status(200).send(products))
-        .catch(e => res.status(500).send(e))
+const getProducts = async (req: Request, res: Response) => {
+    try {
+        const products = await Product.find()
+        res.status(200).send(products)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 const getProductById = async (req: Request, res: Response) => {
-    db('product')
-        .where({ id: req.params.id })
-        .then(product => res.status(200).send(product))
-        .catch(e => res.status(500).send(e))
+    try {
+        const user = await Product.findById(req.params.id)
+        res.status(200).send(user)
+    } catch (e: any) {
+        res.status(404).send('Nenhum produto encontrado')
+    }
 }
 
-const createProduct = (req: Request, res: Response) => {
-    const product = req.body
+const createProduct = async (req: Request, res: Response) => {
+    try {
+        const body = req.body
+        await Product.create(body)
 
-    db('product')
-        .insert(product)
-        .then(() => res.status(204).send())
-        .catch(e => res.status(500).send(e))
+        res.status(201).send('Produto Criado com sucesso')
+    } catch (e: any) {
+        res.status(500).send(e)
+    }
 }
 
-const updateProduct = (req: Request, res: Response) => {
-    const product = req.body
+const updateProduct = async (req: Request, res: Response) => {
+    try {
+        const body = req.body
+        await Product.findByIdAndUpdate(req.params.id, body)
 
-    db('product')
-        .update(product)
-        .where({ id: req.params.id })
-        .then(() => res.status(204).send())
-        .catch(e => res.status(500).send(e))
+        res.status(200).send()
+    } catch (e: any) {
+        res.status(404).send('Este produto não existe')
+    }
 }
 
-const deleteProduct = (req: Request, res: Response) => {
-    db('product')
-        .delete()
-        .where({ id: req.params.id })
-        .then(() => res.status(204).send())
-        .catch(e => res.status(500).send(e))
+const deleteProduct = async (req: Request, res: Response) => {
+    try {
+        await Product.findByIdAndRemove(req.params.id)
+        res.status(200).send()
+    } catch (e: any) {
+        res.status(404).send('Nenhum produto foi encontrado')
+    }
 }
 
 export {

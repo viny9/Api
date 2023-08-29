@@ -5,6 +5,7 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2022-11-15',
 })
+
 const endpointSecret: string = process.env.STRIPE_ENDPOINT_SECRET!
 
 const createProductPaymentSession = async (req: Request, res: Response) => {

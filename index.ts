@@ -3,12 +3,7 @@ import dotenv from 'dotenv'
 import bodyParser from "body-parser";
 import cors from 'cors'
 import router from "./src/config/routes";
-
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2022-11-15',
-})
+import conect from "./src/config/mongodb";
 
 dotenv.config()
 
@@ -19,6 +14,7 @@ app.use('/webhook', bodyParser.raw({ type: "*/*" })) // Só para essa rota em es
 app.use(bodyParser.json())
 app.use(cors())
 app.use(router)
+conect()
 
 
 app.listen(port, () => {

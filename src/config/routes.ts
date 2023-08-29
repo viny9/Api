@@ -45,11 +45,11 @@ router.route('/cart/:id')
 
 router.route('/list')
     .all(isLogged)
-    .get(getListItems)
     .post(addItemInList)
-
-router.route('/list/:id')
+    
+    router.route('/list/:id')
     .all(isLogged)
+    .get(getListItems)
     .put(changeItemPosition)
     .delete(removeItemFromList)
 

@@ -1,31 +1,36 @@
 import { Request, Response } from "express";
 import { db } from "../config/db";
+import User from "../models/User";
 
-const getListItems = (req: Request, res: Response) => {
-    db('favorite_list_item')
-        .then(items => items.sort((a, b) => a.position - b.position))
-        .then(items => res.status(201).send(items))
-        .catch(e => res.status(500).send(e))
+const getListItems = async (req: Request, res: Response) => {
+    try {
+        const products = await User.findById(req.params.id)
+        // res.status(200).send(products?.list_items)
+    } catch (e: any) {
+        res.status(404).send(e.message)
+    }
 }
 
 const addItemInList = async (req: Request, res: Response) => {
-    const newItem = req.body
-    const checkIfExists = await db('favorite_list_item')
-        .where({ product_id: newItem.product_id })
+    const body = req.body
+
+    // const newItem = req.body
+    // const checkIfExists = await db('favorite_list_item')
+    //     .where({ product_id: newItem.product_id })
 
 
-    if (checkIfExists.length === 0) {
-        const items = await db('favorite_list_item')
+    // if (checkIfExists.length === 0) {
+    //     const items = await db('favorite_list_item')
 
-        newItem.position = items.length + 1 || 1
+    //     newItem.position = items.length + 1 || 1
 
-        db('favorite_list_item')
-            .insert(newItem)
-            .then(() => res.status(201).send())
-            .catch(e => res.status(500).send(e))
-    } else {
-        res.send('Este produto já está no carrinho')
-    }
+    //     db('favorite_list_item')
+    //         .insert(newItem)
+    //         .then(() => res.status(201).send())
+    //         .catch(e => res.status(500).send(e))
+    // } else {
+    //     res.send('Este produto já está no carrinho')
+    // }
 
 }
 
