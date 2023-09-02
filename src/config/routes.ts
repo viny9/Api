@@ -33,23 +33,17 @@ router.route('/users/:id') // Talvez tirar esse id e pegar o id pelo token
     .put(updateUser)
     .delete(deleteUser)
 
-router.route('/cart')
-    .all(isLogged)
-    .get(getCartItems)
-    .post(addItemInCart)
-
 router.route('/cart/:id')
     .all(isLogged)
+    .get(getCartItems)
     .get(getCartItemsById)
+    .post(addItemInCart)
     .delete(removeCartItem)
-
-router.route('/list')
-    .all(isLogged)
-    .post(addItemInList)
     
     router.route('/list/:id')
     .all(isLogged)
     .get(getListItems)
+    .post(addItemInList)
     .put(changeItemPosition)
     .delete(removeItemFromList)
 

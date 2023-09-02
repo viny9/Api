@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { db } from "../config/db";
+import List from "../models/List";
 import User from "../models/User";
 
 const getListItems = async (req: Request, res: Response) => {
@@ -12,27 +13,42 @@ const getListItems = async (req: Request, res: Response) => {
 }
 
 const addItemInList = async (req: Request, res: Response) => {
-    const body = req.body
+    try {
+        // Verificar se já na lista
+        const item = req.body
 
-    // const newItem = req.body
-    // const checkIfExists = await db('favorite_list_item')
-    //     .where({ product_id: newItem.product_id })
+        const products: any = (await List.findOne({ user_id: req.params.id }))?.products
+        item.position = products.length + 1
 
+        const cart = await List.findOneAndUpdate(
+            { user_id: req.params.id },
+            { $push: { products: item } }
+        )
 
-    // if (checkIfExists.length === 0) {
-    //     const items = await db('favorite_list_item')
-
-    //     newItem.position = items.length + 1 || 1
-
-    //     db('favorite_list_item')
-    //         .insert(newItem)
-    //         .then(() => res.status(201).send())
-    //         .catch(e => res.status(500).send(e))
-    // } else {
-    //     res.send('Este produto já está no carrinho')
-    // }
-
+        res.status(201).send(cart)
+    } catch (e: any) {
+        res.status(400).send(e.message)
+    }
 }
+
+// const newItem = req.body
+// const checkIfExists = await db('favorite_list_item')
+//     .where({ product_id: newItem.product_id })
+
+
+// if (checkIfExists.length === 0) {
+//     const items = await db('favorite_list_item')
+
+//     newItem.position = items.length + 1 || 1
+
+//     db('favorite_list_item')
+//         .insert(newItem)
+//         .then(() => res.status(201).send())
+//         .catch(e => res.status(500).send(e))
+// } else {
+//     res.send('Este produto já está no carrinho')
+// }
+
 
 const changeItemPosition = async (req: Request, res: Response) => {
     const arrayOfItems = await db('favorite_list_item') // Array de todos os items dentro da lista
@@ -62,12 +78,17 @@ const changeItemPosition = async (req: Request, res: Response) => {
     })
 }
 
-const removeItemFromList = (req: Request, res: Response) => {
-    db('favorite_list_item')
-        .delete()
-        .where({ id: req.params.id })
-        .then(() => res.status(200).send())
-        .catch(e => res.status(500).send(e))
+const removeItemFromList = async (req: Request, res: Response) => {
+    try {
+        const product = await List.findOneAndUpdate(
+            { user_id: req.params.id },
+            { $pull: { products: { product: req.body.product_id } } }
+        )
+
+        res.status(200).send(product)
+    } catch (e: any) {
+        res.status(404).send(e.message)
+    }
 }
 
 export {
