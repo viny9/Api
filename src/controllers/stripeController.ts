@@ -5,9 +5,9 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2022-11-15',
 })
-
 const endpointSecret: string = process.env.STRIPE_ENDPOINT_SECRET!
 
+// Criar metodo pra lidar com vencimento de boleto
 const createProductPaymentSession = async (req: Request, res: Response) => {
     const body = req.body
     const lineItems = [
@@ -35,14 +35,14 @@ const createProductPaymentSession = async (req: Request, res: Response) => {
         expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
     })
 
-    res.send(session.url)
+    res.status(200).send(session.url)
 }
 
 const createCartPaymentSession = async (req: Request, res: Response) => {
     const body = req.body
     const products = body.map((product: any) => {
         return {
-            product_id: product.id,
+            product: product.id,
             quantity: product.quantity
         }
     })
@@ -58,7 +58,6 @@ const createCartPaymentSession = async (req: Request, res: Response) => {
                 unit_amount: product.price * 100,
             },
             quantity: Number(product.quantity),
-
         }
     })
 
@@ -88,7 +87,7 @@ const listenWebhooks = async (req: any, res: Response) => {
     }
 
     handleStripeEvent(event)
-
+    
     res.send();
 }
 
@@ -97,20 +96,9 @@ const handleStripeEvent = async (event: Stripe.Event) => {
         case 'checkout.session.completed':
             const session: any = event.data.object;
             const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent)
-            const order: any = {
-                user_id: 0,
-                user_email: session.customer_details.email,
-                total: paymentIntent.amount / 100, // Verificar depois se o total ja conta com frete
-                status: session.payment_status,
-                payment_method: paymentIntent.payment_method_types[0],
-                metadata: session.metadata,
-                payment_id: paymentIntent.id
-            }
-
-            if (paymentIntent.payment_method_types[0] === 'card') { delete order.payment_id }
+            const order = new (Order as any)(session, paymentIntent)
 
             newOrder(order)
-
             break;
 
         case 'payment_intent.succeeded':
@@ -119,13 +107,48 @@ const handleStripeEvent = async (event: Stripe.Event) => {
             if (paymentIntentSucceeded.payment_method_types[0] === 'boleto') {
                 updateOrderStatus(paymentIntentSucceeded)
             }
-
             break;
 
         default:
             console.log(`Unhandled event type ${event.type}`);
     }
 }
+
+function Order(this: any, session: any, paymentIntent: any) {
+    this.user = session.customer_details.email
+    this.payment_infos = {
+        // card_last_four_numbers: 0, //Tratar os dados do cartão depois
+        discount: 0, //Tratar o disconto depois
+        shipping: session.shipping_cost,
+        amount: paymentIntent.amount / 100,
+        payment_method: paymentIntent.payment_method_types[0]
+    }
+
+    this.status = session.payment_status
+    this.products = setProducts(session)
+    this.payment_id = isBoleto(paymentIntent)
+}
+
+const setProducts = (session: any) => {
+    const products = session.metadata.products ?
+        JSON.parse(session.metadata.products)
+        :
+        [
+            {
+                product: session.metadata.product_id,
+                quantity: session.metadata.quantity
+            }
+        ]
+
+    return products
+}
+
+const isBoleto = (paymentIntent: any) => {
+    if (paymentIntent.payment_method_types[0] === 'boleto') {
+        return paymentIntent.id
+    }
+}
+
 
 export {
     createProductPaymentSession,

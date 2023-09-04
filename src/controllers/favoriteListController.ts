@@ -1,11 +1,8 @@
 import { Request, Response } from "express";
-import { db } from "../config/db";
 import List from "../models/List";
-import User from "../models/User";
 
 const getListItems = async (req: Request, res: Response) => {
     try {
-        const products = await User.findById(req.params.id)
         // res.status(200).send(products?.list_items)
     } catch (e: any) {
         res.status(404).send(e.message)
@@ -50,33 +47,33 @@ const addItemInList = async (req: Request, res: Response) => {
 // }
 
 
-const changeItemPosition = async (req: Request, res: Response) => {
-    const arrayOfItems = await db('favorite_list_item') // Array de todos os items dentro da lista
-    const arrayOfIds = arrayOfItems.map(item => item?.id) // Array de ids de cada item da lista
-    const id = Number(req.params.id)
-    const oldIndex = arrayOfIds.indexOf(id)
-    const newIndex = req.body.position - 1
+// const changeItemPosition = async (req: Request, res: Response) => {
+//     const arrayOfItems = await db('favorite_list_item') // Array de todos os items dentro da lista
+//     const arrayOfIds = arrayOfItems.map(item => item?.id) // Array de ids de cada item da lista
+//     const id = Number(req.params.id)
+//     const oldIndex = arrayOfIds.indexOf(id)
+//     const newIndex = req.body.position - 1
 
-    arrayOfItems.splice(newIndex, 0, arrayOfItems.splice(oldIndex, 1)[0]) // Vai atualizar a ordem dos elementos no array
-    const arrayOfItemsPositions = arrayOfItems.map(item => item?.position)
+//     arrayOfItems.splice(newIndex, 0, arrayOfItems.splice(oldIndex, 1)[0]) // Vai atualizar a ordem dos elementos no array
+//     const arrayOfItemsPositions = arrayOfItems.map(item => item?.position)
 
-    // Vai atualizar as posições de cada item 
-    const updatedArray = arrayOfItems.map(item => {
-        const index = arrayOfItemsPositions.indexOf(item.position)
-        item.position = index + 1
-        return item
-    })
+//     // Vai atualizar as posições de cada item 
+//     const updatedArray = arrayOfItems.map(item => {
+//         const index = arrayOfItemsPositions.indexOf(item.position)
+//         item.position = index + 1
+//         return item
+//     })
 
-    // Vai atualizar o banco de dados
-    // Talvez fazer uma mudança mais tarde para atualizar somente os que foram afetados
-    updatedArray.forEach(item => {
-        db('favorite_list_item')
-            .update(item)
-            .where({ id: item.id })
-            .then(() => res.status(200).send())
-            .catch(e => res.status(500).send(e))
-    })
-}
+//     // Vai atualizar o banco de dados
+//     // Talvez fazer uma mudança mais tarde para atualizar somente os que foram afetados
+//     updatedArray.forEach(item => {
+//         db('favorite_list_item')
+//             .update(item)
+//             .where({ id: item.id })
+//             .then(() => res.status(200).send())
+//             .catch(e => res.status(500).send(e))
+//     })
+// }
 
 const removeItemFromList = async (req: Request, res: Response) => {
     try {
@@ -94,6 +91,6 @@ const removeItemFromList = async (req: Request, res: Response) => {
 export {
     getListItems,
     addItemInList,
-    changeItemPosition,
+    // changeItemPosition,
     removeItemFromList
 }

@@ -3,7 +3,7 @@ import { isAdmin, isLogged } from './auth'
 import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
 import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
 import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
-import { addItemInList, changeItemPosition, getListItems, removeItemFromList } from '../controllers/favoriteListController'
+import { addItemInList, getListItems, removeItemFromList } from '../controllers/favoriteListController'
 import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
 import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
 import { deleteOrder, getOrders } from '../controllers/orderController'
@@ -44,7 +44,7 @@ router.route('/cart/:id')
     .all(isLogged)
     .get(getListItems)
     .post(addItemInList)
-    .put(changeItemPosition)
+    // .put(changeItemPosition)
     .delete(removeItemFromList)
 
 router.route('/category')

@@ -1,111 +1,111 @@
 import { Request, Response } from "express";
-import { db } from "../config/db";
+import Discount from "../models/Discount";
+import Product from "../models/Product";
 
+// Adicionar uma rotina para 
 const getDiscounts = async (req: Request, res: Response) => {
-    try {
-        let discounts = await db('discount')
+    // try {
+    //     let discounts = await db('discount')
 
-        discounts = discounts.map(async discount => {
-            const products = await db('product_discount')
-                .where({ discount_id: discount.id })
+    //     discounts = discounts.map(async discount => {
+    //         const products = await db('product_discount')
+    //             .where({ discount_id: discount.id })
 
-            discount.products = products
-            return discount
-        })
+    //         discount.products = products
+    //         return discount
+    //     })
 
-        discounts = await Promise.all(discounts)
-        res.status(200).send(discounts)
-    } catch (e) {
-        res.status(500).send(e)
-    }
+    //     discounts = await Promise.all(discounts)
+    //     res.status(200).send(discounts)
+    // } catch (e) {
+    //     res.status(500).send(e)
+    // }
 }
 
 const newDiscount = async (req: Request, res: Response) => {
-    const discount = req.body
-    const products = discount.products
+    try {
+        const body = req.body
+        const discount = await Discount.create(body)
 
-    delete discount.products
+        addProductPromotion(body.products, discount._id)
 
-    await db('discount')
-        .insert(discount)
-        .catch(e => res.status(500).send(e))
-
-    const allDiscounts = await db('discount')
-    const lastProductIndex = allDiscounts.length - 1
-
-    await products.forEach(async (product: any) => {
-        product.discount_id = allDiscounts[lastProductIndex]?.id || 1
-
-        db('product_discount')
-            .insert(product)
-            .then(() => res.status(200).send())
-            .catch(e => res.status(500).send(e))
-    });
+        res.status(201).send(discount)
+    } catch (e: any) {
+        res.status(200).send(e.message)
+    }
 }
 
 const updateDiscountInfos = async (req: Request, res: Response) => {
-    const body = req.body
-    const dbProducts: any = await db('product_discount')
-        .where({ discount_id: req.params.id })
+    try {
+        const body = req.body
+        const discount = await Discount.findByIdAndUpdate(req.params.id, body)
+        const removedElements = await getRemovedProducts(body.products, req.params.id)
 
-    updateDiscountProducts(body.products, dbProducts)
-        .catch(e => res.status(500).send(e))
+        if (body.products) {
+            addProductPromotion(body.products, req.params.id)
+        }
 
-    delete body.products
-    db('discount')
-        .update(body)
-        .where({ id: req.params.id })
-        .then(() => res.status(200).send())
-        .catch(e => res.status(500).send(e))
+        if (removedElements.length > 0) {
+            removeProductPromotion(removedElements)
+        }
+
+        res.status(200).send(discount)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
-const updateDiscountProducts = (products: any, dbProducts: any) => {
-    return new Promise((resolve, reject) => {
-        const productIdArray = products.map((product: any) => product.product_id)
-        const dbProductsIdArray = dbProducts.map((product: any) => product.product_id)
+// Vai pegar todos os produtos que  dados com eliminados
+const getRemovedProducts = async (products: Array<Object>, discount_id: Object) => {
+    const productsIdArray = products.map((product: any) => product.product)
+    let dbProducts: any = await Discount.findById(discount_id)
+    dbProducts = dbProducts.products.map((product: any) => product.product)
 
-        // Adiciona os novos produtos na promoção
-        products.forEach((product: any) => {
-            if (dbProductsIdArray.includes(product.product_id) === false) {
-                db('product_discount')
-                    .insert(product)
-                    .catch(e => reject(e))
-            }
-        });
+    const removedElements = dbProducts?.filter((element: any) => !productsIdArray.includes(element))
+    return removedElements
+}
 
-        // Vai deletar os produtos que foram removidos da promoção
-        // Talvez terar que ajustar futuramente
-        const deleteArray = dbProducts.map((product: any) => {
-            if (productIdArray.includes(product.product_id) === false) {
-                return product
-            }
-        });
-
-        deleteArray.forEach(async (product: any) => {
-            if (product != undefined) {
-
-                db('product_discount')
-                    .delete()
-                    .where({ product_id: product.product_id })
-                    .catch(e => reject(e))
-            }
-        });
-
-        resolve(null)
+// Vai remover todos foramos produtos que  dados com eliminados
+const removeProductPromotion = async (products: Array<Object>) => {
+    products.forEach(async product => {
+        await Product.findByIdAndUpdate(
+            product,
+            { promotionInfos: null }
+        )
     })
 }
 
-const deleteDiscount = (req: Request, res: Response) => {
-    db('product_discount')
-        .delete()
-        .where({ discount_id: req.params.id })
-        .catch(e => res.status(500).send(e))
+const addProductPromotion = async (products: any, discount_id: Object) => {
+    try {
+        await products.forEach(async (product: any) => {
+            product.discount_id = discount_id
 
-    db('discount')
-        .delete()
-        .where({ id: req.params.id })
-        .then(() => res.status(200).send())
-        .catch(e => res.status(500).send(e))
+            const product_id = product.product
+            delete product.product
+
+            await Product.findByIdAndUpdate(
+                product_id,
+                { promotionInfos: product }
+            )
+        });
+
+    } catch (e: any) {
+        throw new Error(e.message)
+    }
+}
+
+const deleteDiscount = async (req: Request, res: Response) => {
+    try {
+        await Discount.findByIdAndRemove(req.params.id)
+        await Product.updateMany(
+            { 'promotionInfos.discount_id': req.params.id },
+            { promotionInfos: null }
+        )
+
+        res.status(200).send()
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 export {

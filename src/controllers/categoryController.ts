@@ -1,47 +1,45 @@
 import { Request, Response } from "express";
-import { db } from "../config/db";
+import Category from "../models/Category";
 
-const getCategories = (req: Request, res: Response) => {
-    db('product_category')
-        .then(categories => res.status(200).send(categories))
-        .catch(e => res.status(500).send(e))
+// Adicionar metodo para pegar produtos por categoria 
+
+const getCategories = async (req: Request, res: Response) => {
+    try {
+        const category = await Category.find()
+        res.status(200).send(category)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 const newCategory = async (req: Request, res: Response) => {
-    const body = req.body
+    // Checar sé ja existe
 
-    const categories = await db('product_category')
-        .where({ name: body.name })
-
-    if (categories.length === 0) {
-        db('product_category')
-            .insert(body)
-            .then(() => res.status(201).send())
-            .catch(e => res.status(500).send(e))
-    } else {
-        res.status(400).send('Está categoria já existe')
+    try {
+        const category = await Category.create(req.body)
+        res.status(201).send(category)
+    } catch (e: any) {
+        res.status(500).send(e.message)
     }
-
 }
 
-const editCategory = (req: Request, res: Response) => {
-    const body = req.body
-
-    db('product_category')
-        .update(body)
-        .where({ id: req.params.id })
-        .then(() => res.status(200).send())
-        .catch(e => res.status(500).send(e))
+const editCategory = async (req: Request, res: Response) => {
+    try {
+        const body = req.body
+        const category = await Category.findByIdAndUpdate(req.params.id, req.body)
+        res.status(200).send(category)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 const deleteCategory = async (req: Request, res: Response) => {
-    db('product_category')
-        .delete()
-        .where({ id: req.params.id })
-        .then(() => res.status(200).send())
-        .catch(e => res.status(500).send(e))
-
-
+    try {
+        const category = await Category.findByIdAndRemove(req.params.id)
+        res.status(200).send(category)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 export {
