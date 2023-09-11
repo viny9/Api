@@ -1,24 +1,51 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Order from "../models/Order";
 import User from "../models/User";
 
-const getOrders = async (req: Request, res: Response) => {
-    // try {
-    //     const orders: any = await db
-    //         .select('o.id', 'o.user_id', 'o.status', 'o.total', 'o.payment_method', db.raw('JSON_ARRAYAGG(JSON_OBJECT("product_id", a.product_id, "quantity", a.quantity)) as products'))
-    //         .from('order as o')
-    //         .join('order_item as a', 'o.id', 'a.order_id')
-    //         .groupBy('o.id')
+const getAllOrders = async (req: Request, res: Response) => {
+    try {
+        const order = await Order.find()
+            .populate('user', '_id name email telephone')
+            .populate('products.product', 'product name price name category img')
 
-    //     orders.forEach((order: any) => {
-    //         order.products = JSON.parse(order.products)
-    //     });
-
-    //     res.status(200).send(orders)
-    // } catch (e) {
-    //     res.status(500).send(e)
-    // }
+        res.status(200).send(order)
+    } catch (e: any) {
+        res.status(404).send(e.message)
+    }
 }
+
+const getUserOrders = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const querysArray = Object.keys(req.query)
+
+        if (querysArray.length === 0) {
+            return next()
+        }
+
+        const order = await Order.find({ user: req.query.user_id })
+            .populate('user', '_id name email telephone')
+            .populate('products.product', 'product name price name category img')
+
+        res.status(200).send(order)
+    } catch (e: any) {
+        res.status(404).send(e.message)
+    }
+}
+
+const getOrderById = async (req: Request, res: Response) => {
+    try {
+        const order = await Order.findById(req.params.id)
+            .populate('user', '_id name email telephone')
+            .populate('products.product', 'product name price name category img')
+
+        res.status(200).send(order)
+    } catch (e: any) {
+        res.status(404).send(e.message)
+    }
+}
+
+// getLastMounthOrders
+// Adicionar um filtro pra dizer de quando vai pegar os produtos
 
 const newOrder = async (order: any) => {
     try {
@@ -44,7 +71,6 @@ const updateOrderStatus = async (paymentIntent: any) => {
 }
 
 const deleteOrder = async (req: Request, res: Response) => {
-    // Talvez adicionar uma rotina bet 
     try {
         const order = await Order.findByIdAndRemove(req.params.id)
         res.status(200).send(order)
@@ -54,7 +80,9 @@ const deleteOrder = async (req: Request, res: Response) => {
 }
 
 export {
-    getOrders,
+    getUserOrders,
+    getAllOrders,
+    getOrderById,
     newOrder,
     updateOrderStatus,
     deleteOrder,

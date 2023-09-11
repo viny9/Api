@@ -2,29 +2,24 @@ import { Request, Response } from "express";
 import Cart from "../models/Cart";
 
 const getCartItems = async (req: Request, res: Response) => {
-    // db('cart_item')
-    //     .join('product', 'product.id', 'cart_item.product_id')
-    //     .select('name', 'price', 'quantity', 'img')
-    //     .then(items => res.status(200).send(items))
-    //     .catch(e => res.status(500).send(e))
-}
+    try {
+        const cart = await Cart.findOne({ user_id: req.params.user_id }, { __v: 0 })
+            .populate('products.product', 'product name price name category img')
 
-const getCartItemsById = async (req: Request, res: Response) => {
-    const id = req.params.id
-    // db('cart_item')
-    //     .join('product', 'product.id', 'cart_item.product_id')
-    //     .select('name', 'price', 'quantity', 'img')
-    //     .where({ product_id: id })
-    //     .then(items => res.status(200).send(items))
-    //     .catch(e => res.status(500).send(e))
+        res.status(200).send(cart)
+    } catch (e: any) {
+        res.status(500).send(e.message)
+    }
 }
 
 const addItemInCart = async (req: Request, res: Response) => {
-    // Checar se já existe
-    
     try {
+        const { body, params } = req
+        const exists = await checkIfExists(params.user_id, body.product)
+        if (exists) { throw new Error('Este produto já está no carrinho') }
+
         const cart = await Cart.findOneAndUpdate(
-            { user_id: req.params.id },
+            { user_id: req.params.user_id },
             { $push: { products: req.body } }
         )
 
@@ -32,15 +27,17 @@ const addItemInCart = async (req: Request, res: Response) => {
     } catch (e: any) {
         res.status(400).send(e.message)
     }
-
 }
 
 const removeCartItem = async (req: Request, res: Response) => {
-    console.log(req.body)
     try {
+        const { user_id, product_id } = req.params
+        const exists = await checkIfExists(user_id, product_id)
+        if (!exists) { throw new Error('Não foi possível encontrar esse produto') }
+
         const product = await Cart.findOneAndUpdate(
-            { user_id: req.params.id },
-            { $pull: { products: { product: req.body.product_id } } }
+            { user_id: user_id },
+            { $pull: { products: { product: product_id } } }
         )
 
         res.status(200).send(product)
@@ -49,9 +46,13 @@ const removeCartItem = async (req: Request, res: Response) => {
     }
 }
 
+const checkIfExists = async (user_id: string, product_id: string) => {
+    const cart = await Cart.findOne({ user_id: user_id })
+    const cartProduct = cart?.products.find(product => product.product === product_id)
+    return cartProduct != undefined ? true : false
+}
 export {
     getCartItems,
-    getCartItemsById,
     addItemInCart,
     removeCartItem
 }

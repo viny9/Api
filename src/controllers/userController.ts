@@ -12,11 +12,20 @@ const signUp = async (req: Request, res: Response) => {
         const hashPassword = await bcrypt.hash(user.password, 10)
         user.password = hashPassword
 
+        const exists = await checkIfExists(user.email)
+        if (exists) { throw new Error('Esse email já está em uso') }
+
         await User.create(user)
         res.status(201).send('Usuário criado com sucesso')
     } catch (e: any) {
         res.status(400).send(e.message)
     }
+}
+
+const checkIfExists = async (email: string) => {
+    const user = await User.findOne({ email: email })
+
+    return user != null? true : false 
 }
 
 const login = async (req: Request, res: Response) => {

@@ -5,6 +5,7 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2022-11-15',
 })
+
 const endpointSecret: string = process.env.STRIPE_ENDPOINT_SECRET!
 
 // Criar metodo pra lidar com vencimento de boleto
@@ -87,7 +88,7 @@ const listenWebhooks = async (req: any, res: Response) => {
     }
 
     handleStripeEvent(event)
-    
+
     res.send();
 }
 

@@ -1,12 +1,12 @@
 import express from 'express'
 import { isAdmin, isLogged } from './auth'
 import { signUp, login, getUserById, updateUser, deleteUser, getUsers } from '../controllers/userController'
-import { createProduct, deleteProduct, getProductById, getProducts, updateProduct } from '../controllers/productController'
-import { addItemInCart, getCartItems, getCartItemsById, removeCartItem } from '../controllers/cartController'
+import { createProduct, deleteProduct, getProductById, getProducts, getProductsByCategory, updateProduct } from '../controllers/productController'
+import { addItemInCart, getCartItems, removeCartItem } from '../controllers/cartController'
 import { addItemInList, getListItems, removeItemFromList } from '../controllers/favoriteListController'
 import { deleteCategory, editCategory, getCategories, newCategory } from '../controllers/categoryController'
 import { deleteDiscount, getDiscounts, newDiscount, updateDiscountInfos } from '../controllers/discountController'
-import { deleteOrder, getOrders } from '../controllers/orderController'
+import { deleteOrder, getOrderById, getAllOrders, getUserOrders } from '../controllers/orderController'
 import { createProductPaymentSession, createCartPaymentSession, listenWebhooks } from '../controllers/stripeController'
 
 const router = express.Router()
@@ -14,9 +14,12 @@ const router = express.Router()
 router.post('/signUp', signUp)
 router.post('/login', login)
 router.post('/webhook', listenWebhooks)
+router.post('/payment', isLogged, createProductPaymentSession)
+router.post('/payment/cart', isLogged, createCartPaymentSession)
 
 router.route('/products')
     .get(getProducts)
+    .get(getProductsByCategory)
     .post(isAdmin, createProduct)
 
 router.route('/products/:id')
@@ -27,25 +30,25 @@ router.route('/products/:id')
 router.route('/users')
     .get(getUsers)
 
-router.route('/users/:id') // Talvez tirar esse id e pegar o id pelo token
+router.route('/users/:id')
     .all(isLogged)
     .get(getUserById)
     .put(updateUser)
     .delete(deleteUser)
 
-router.route('/cart/:id')
+router.route('/cart/:user_id')
     .all(isLogged)
     .get(getCartItems)
-    .get(getCartItemsById)
     .post(addItemInCart)
-    .delete(removeCartItem)
-    
-    router.route('/list/:id')
+
+router.delete('/cart/:user_id/:product_id', isLogged, removeCartItem)
+
+router.route('/list/:user_id')
     .all(isLogged)
     .get(getListItems)
     .post(addItemInList)
-    // .put(changeItemPosition)
-    .delete(removeItemFromList)
+// .put(changeItemPosition)
+router.delete('/list/:user_id/:product_id', isLogged, removeItemFromList)
 
 router.route('/category')
     .get(isLogged, getCategories)
@@ -66,12 +69,11 @@ router.route('/discount/:id')
     .delete(deleteDiscount)
 
 router.route('/order')
-    .get(getOrders)
+    .get(isLogged, getUserOrders)
+    .get(isAdmin, getAllOrders)
 
 router.route('/order/:id')
-    .delete(deleteOrder)
-
-router.post('/payment', isLogged, createProductPaymentSession)
-router.post('/payment/cart', isLogged, createCartPaymentSession)
+    .get(isLogged, getOrderById)
+    .delete(isAdmin, deleteOrder)
 
 export default router

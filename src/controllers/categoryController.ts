@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import Category from "../models/Category";
 
 // Adicionar metodo para pegar produtos por categoria 
-
 const getCategories = async (req: Request, res: Response) => {
     try {
         const category = await Category.find()
@@ -13,9 +12,10 @@ const getCategories = async (req: Request, res: Response) => {
 }
 
 const newCategory = async (req: Request, res: Response) => {
-    // Checar sé ja existe
-
     try {
+        const exists = await checkIfExists(req.body.name)
+        if (exists) { throw new Error("Essa categoria já existe") }
+        
         const category = await Category.create(req.body)
         res.status(201).send(category)
     } catch (e: any) {
@@ -23,9 +23,13 @@ const newCategory = async (req: Request, res: Response) => {
     }
 }
 
+const checkIfExists = async (categoryName: string) => {
+    const category = await Category.findOne({ name: categoryName })
+    return category != null ? true : false
+}
+
 const editCategory = async (req: Request, res: Response) => {
     try {
-        const body = req.body
         const category = await Category.findByIdAndUpdate(req.params.id, req.body)
         res.status(200).send(category)
     } catch (e: any) {
